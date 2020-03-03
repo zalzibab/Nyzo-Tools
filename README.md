@@ -1,5 +1,7 @@
 NYZO-MANAGER
 
+Nyzo Manager is a Python CLI tool for quickly viewing your NYZO balances across all verifiers, wallets, and your qTrade account
+
 Input your verifier/wallet nicknames (does not have to be the nickname attached to the verifier) in the list at line 30 and the Public IDs for each of those in the list at line 32. Add your qTrade API where specified at line 77
 
 You will receive individualized and totalled amounts of NYZO holdings, as well as the BTC values of all holdings at the current best bid, front of the order book (lowest ask - 1 satoshi), and orderbook mid point between best bid and lowest ask
