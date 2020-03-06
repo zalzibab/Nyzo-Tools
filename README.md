@@ -10,6 +10,11 @@ Create and append csv file to track NYZO holdings and "best_ask" BTC value over 
 Render chart showing historical holdings and BTC value
 
 
+To keep a daily record of your holdings and value, you can create a cronjob with the following format after making the nyzo_manager.py executable and changing the PATH variable on line 1 of the script to the proper value
+
+0 0 * * * <PATH_TO_SCRIPT>/nyzo_manager.py
+
+
 NYZO-JOURNAL
 
 This script pulls your NYZO buy/sell and withdraw/deposit history from your qTrade account and reformats the data to be imported into the Delta Portfolio Tracker App
