@@ -6,9 +6,9 @@ Input your verifier/wallet nicknames (does not have to be the nickname attached 
 
 You will receive individualized and totalled amounts of NYZO holdings, as well as the BTC values of all holdings at the current best bid, front of the order book (lowest ask - 1 satoshi), and orderbook mid point between best bid and lowest ask
 
-To keep a daily record of your holdings and value, you can create a cronjob with the following format after making the nyzo_manager.py executable and changing the PATH variable on line 1 of the script to the proper value
+Create and append csv file to track NYZO holdings and "best_ask" BTC value over time
+Render chart showing historical holdings and BTC value
 
-0 0 * * * <PATH_TO_SCRIPT>/nyzo_manager.py >> nyzo_holdings.txt
 
 NYZO-JOURNAL
 
