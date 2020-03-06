@@ -2,7 +2,6 @@
 # coding: utf-8
 
 
-
 import requests
 import requests.auth
 import base64
@@ -14,6 +13,15 @@ from urllib.parse import urlparse
 from datetime import datetime, timezone
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+import pandas as pd
+import os.path
+import matplotlib.dates as mdates
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib import gridspec
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+from matplotlib.pyplot import figure
 
 def get_balance(url, wallet_id):
     page = urlopen(url+wallet_id)
@@ -23,8 +31,6 @@ def get_balance(url, wallet_id):
     return balance
 
 #Leave 'url' variable unchanged
-#Replace verifier/wallet nicknames in the 'nicknames' variable
-
 url = 'https://nyzo.co/wallet?id='
 #Replace Sample with the nicknames for each of your verifiers/wallets
 nicknames = ['Sample', 'Sample', 'Sample']
@@ -77,8 +83,6 @@ api = requests.Session()
 api.auth = QtradeAuth("") #Your API Key goes between the quotations here
 
 all_balances = api.get("https://api.qtrade.io/v1/user/balances").json()
-json_str = json.dumps(all_balances)
-all_balances = json.loads(json_str)
 for x in range(len(all_balances['data']['balances'])):
         if all_balances['data']['balances'][x]['currency'] == 'NYZO':
             cold_balance = float(all_balances['data']['balances'][x]['balance'])
@@ -95,8 +99,6 @@ total_qTrade_balance = cold_balance + on_order_balance
 total_balance = total_qTrade_balance + total_wallet_balance
 
 ticker = api.get("https://api.qtrade.io/v1/ticker/NYZO_BTC").json()
-json_str = json.dumps(ticker)
-ticker = json.loads(json_str)
 
 highest_bid = float(ticker['data']['bid'])
 lowest_ask = float(ticker['data']['ask'])
@@ -109,7 +111,7 @@ mid_price_value = format(total_balance*mid_price, '.8f')
 highest_bid = format(highest_bid, '.8f')
 front_of_book = format(front_of_book, '.8f')
 mid_price = format(mid_price, '.8f')
-timestamp = datetime.now(tz=None).strftime('%Y-%m-%d %H:%M')
+timestamp = datetime.now(tz=None).strftime('%m-%d-%Y %H:%M')
 message = f"""All Wallets & Verifiers: {total_wallet_balance}
 qTrade Balance: {total_qTrade_balance}
 Total NYZO Holdings: {total_balance}
@@ -122,3 +124,50 @@ for k, v in wallets_dict.items():
     print(str(v[0])+': '+str(v[1]))
 print(message+'\n')
 
+dictionary = {'Date': timestamp}
+for x,y in wallet_tuples:
+    dictionary[x] = y
+dictionary['qTrade'] = total_qTrade_balance
+dictionary['Total'] = total_wallet_balance
+dictionary['btcValue'] = front_of_book_value
+
+if os.path.isfile('nyzo_holdings.csv'):
+    nyzo_balances_df = pd.read_csv('nyzo_holdings.csv', index_col=0)
+    new_values_df = pd.DataFrame(data=dictionary, index=[0])
+    new_values_df['Change'] = 0
+    nyzo_balances_df = nyzo_balances_df.append(new_values_df, ignore_index=True, sort=True)
+    nyzo_balances_df['Change'].iloc[-1] = (nyzo_balances_df['Total'].iloc[-1]-nyzo_balances_df['Total'].iloc[-2])
+    nyzo_balances_df.to_csv('nyzo_holdings.csv')
+    
+    fig = plt.figure(figsize=(18,10))
+    gs1 = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
+
+    x_axis = nyzo_balances_df['Date']
+    ax1 = plt.subplot(gs1[0])
+    plt.plot(x_axis, nyzo_balances_df['Total'], label='Current_Total_Nyzo'+'\n'+str(total_balance))
+    plt.ylabel('Total_Nyzo', fontdict={'fontsize': 24})
+    plt.title('Nyzo_Holdings_History', fontdict={'fontsize': 32})
+    plt.legend()
+    ax1.xaxis_date()
+    ax1.set_axisbelow(True)
+    plt.grid(b=None, which='major', axis='both')
+    plt.tick_params(axis='x', which='both', top=False, bottom=False, labelbottom=False)
+    plt.tick_params(axis='y', which='both', left=True, right=True, labelleft=True, labelright=True)
+
+    ax2 = plt.subplot(gs1[1], sharex=ax1)
+    plt.plot(x_axis, nyzo_balances_df['btcValue'])
+    plt.ylabel('BTC_Value', fontdict={'fontsize': 24})
+    plt.tick_params(axis='x', which='both', top=False, bottom=True, labeltop=False, labelbottom=True)
+    plt.tick_params(axis='y', which='both', left=True, right=True, labelleft=True, labelright=True)
+    plt.grid(b=None, which='major', axis='both')
+    ax2.set_axisbelow(True)
+    plt.autoscale(tight=True)
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85, bottom=0.07, left=0.07, right=0.93, hspace=0, wspace=0)
+    plt.savefig('nyzo_holdings.png', bbox_inches='tight',dpi=100)
+    plt.clf()
+
+else:
+    nyzo_balances_df = pd.DataFrame(data=dictionary, index=[0])
+    nyzo_balances_df['Change'] = 0
+    nyzo_balances_df.to_csv('nyzo_holdings.csv')
